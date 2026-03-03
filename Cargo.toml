@@ -1,0 +1,16 @@
+[package]
+name = "actix-ecommerce"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+actix-web = "4"
+messaging = {path="../messaging"}
+auth = {path="../auth"}
+catalog = {path="../catalog"}
+orders = {path="../orders"}
+inventory = {path="../inventory"}
+tenant ={path="../tenant"}
+dotenvy = "0.15.7"
+async-trait = "0.1.89"
+ferrumec={path="../ferrumec"}
