@@ -2,6 +2,16 @@ use async_trait::async_trait;
 use inventory::InventoryModule;
 use messaging::MessagingModule;
 use orders::{InventoryAgent, OrderEvent, OrderEventHandler};
+use sqlx::{
+    Pool, Sqlite, migrate,
+    migrate::{MigrateError, Migrator},
+};
+
+pub static MIGRATOR: Migrator = migrate!();
+
+pub async fn run_migrations(db: &Pool<Sqlite>) -> Result<(), MigrateError> {
+    MIGRATOR.run(db).await
+}
 
 pub struct OrdersInventoryAgent {
     pub inventory_module: InventoryModule,

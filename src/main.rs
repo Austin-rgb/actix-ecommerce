@@ -1,3 +1,4 @@
+use crate::configs::{EventMessanger, OrdersInventoryAgent, run_migrations};
 use actix_web::{App, HttpServer};
 use auth::{AuthModule, SetupError};
 use catalog::{CatalogModule, Config as CatalogConfig};
@@ -5,16 +6,29 @@ use dotenvy::dotenv;
 use inventory::{CreateItemOnInventory, InventoryModule};
 use messaging::MessagingModule;
 use orders::{Config, OrdersModule};
+use sqlx::{Pool, Sqlite, sqlite::SqlitePoolOptions};
 use std::{env, process::exit};
 use tenant::{AuthorizModule, InitError};
-
-use crate::configs::{EventMessanger, OrdersInventoryAgent};
 mod configs;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
-    let module = match AuthModule::new().await {
+    let db: Pool<Sqlite> = match SqlitePoolOptions::new()
+        .connect("sqlite:database.db/?mode=rwc")
+        .await
+    {
+        Ok(r) => r,
+        Err(e) => {
+            eprintln!("could not connect to database: {}", e);
+            exit(1)
+        }
+    };
+    match run_migrations(&db).await {
+        Ok(_) => (),
+        Err(e) => eprintln!("Error in running migrations: {}", e),
+    };
+    let module = match AuthModule::new(db.clone()).await {
         Ok(m) => m,
         Err(e) => {
             eprintln!("Error occured in setting up auth module. diagnosing...");
@@ -25,7 +39,7 @@ async fn main() -> std::io::Result<()> {
             exit(1)
         }
     };
-    let authoriz = match AuthorizModule::new().await {
+    let authoriz = match AuthorizModule::new(db.clone()).await {
         Ok(r) => r,
         Err(e) => {
             match e {
@@ -36,7 +50,7 @@ async fn main() -> std::io::Result<()> {
                 InitError::Secret(var_error) => {
                     eprintln!("Error in getting SECRET env var: {}", var_error)
                 }
-                InitError::Permissions(read_error) => {
+                InitError::Permissions(_read_error) => {
                     eprintln!("Error in reading permissions vars",)
                 }
             }
@@ -44,7 +58,7 @@ async fn main() -> std::io::Result<()> {
             exit(1)
         }
     };
-    let messages = match MessagingModule::new().await {
+    let messages = match MessagingModule::new(db.clone()).await {
         Ok(m) => m,
         Err(e) => {
             eprintln!("failed to initialize messaging module: {}", e);
@@ -52,7 +66,7 @@ async fn main() -> std::io::Result<()> {
         }
     };
 
-    let inventory = match InventoryModule::new().await {
+    let inventory = match InventoryModule::new(db.clone()).await {
         Ok(r) => r,
         Err(e) => {
             eprintln!("Error in initializing inventory module: {}", e);
