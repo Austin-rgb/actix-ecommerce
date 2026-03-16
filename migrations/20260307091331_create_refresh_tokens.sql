@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
                 id TEXT PRIMARY KEY,
                 user_id TEXT NOT NULL,
                 token TEXT UNIQUE NOT NULL,
+                issuerer TEXT NOT NULL,
                 expires_at DATETIME NOT NULL,
                 revoked BOOLEAN DEFAULT FALSE,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,

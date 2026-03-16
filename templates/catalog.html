@@ -1,15 +1,126 @@
 {% extends "base.html" %}
-{% block title %}Catalog{% endblock title %}
 {% block content %}
-<h2>Product Catalog</h2>
-<ul>
-    {% for product in products %}
-    <li>
-        <strong>
-            {{ product.name }}b- ${{ product.title }}<br>
-        </strong>
-        {{ product.description }}
-    </li>
-    {% endfor %}
-</ul>
-{% endblock content %}
+<main class="catalog-layout">
+  <!-- ========== FILTER SIDEBAR (FORM) ========== -->
+  <aside class="filters-panel">
+    <h2 class="sr-only">Filter products</h2>
+    <form action="/catalog" method="GET" class="filter-form">
+      <!-- search field (q) -->
+      <div class="filter-group">
+        <label for="search">Search</label>
+        <input type="text" id="search" name="q" placeholder="name or description..." value="{{ q | default(value='') }}"
+          aria-label="Search by name or description">
+      </div>
+
+      <!-- category dropdown -->
+      <div class="filter-group">
+        <label for="category">Category</label>
+        <select id="category" name="category">
+          <option value="" selected="selected">All categories</option>
+          {% for cat in categories %}
+          <option value="{{ cat }}" {% if category==cat %}selected{% endif %}>{{ cat }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- min / max price -->
+      <div class="filter-group">
+        <label>Price range</label>
+        <div class="price-range">
+          <input type="number" id="min_price" name="min_price" placeholder="Min" min="0" step="1">
+          <span>–</span>
+          <input type="number" id="max_price" name="max_price" placeholder="Max" min="0" step="1">
+        </div>
+      </div>
+
+      <!-- sort dropdown -->
+      <div class="filter-group">
+        <label for="sort">Sort by</label>
+        <select id="sort" name="sort">
+          <option value="" {% if sort=="" %}selected{% endif %}>Default</option>
+          <option value="price_asc" {% if sort=="price_asc" %}selected{% endif %} selected="selected">Price
+            (low to high)</option>
+          <option value="price_desc" {% if sort=="price_desc" %}selected{% endif %}>Price (high
+            to low)</option>
+          <option value="name" {% if sort=="name" %}selected{% endif %}>Name</option>
+        </select>
+      </div>
+
+      <!-- action buttons: submit + clear filters -->
+      <div class="filter-actions">
+        <button type="submit" class="button button-primary">Apply filters</button>
+        <a href="http://10.42.0.216:8000/catalog" class="button clear-filters" role="button">Clear filters</a>
+      </div>
+    </form>
+  </aside>
+
+  <!-- ========== PRODUCT LISTING + PAGINATION ========== -->
+  <section class="catalog-main">
+    <h1 class="sr-only">Product catalog</h1>
+
+    <!-- product grid -->
+    {% if products and products | length > 0 %}
+    <div class="product-grid">
+      {% for product in products %}
+      <article class="product-card">
+        <!-- product image with fallback -->
+        <div class="product-image">
+          <img src="Tera%20product%20catalog_files/%7B%7B%20product.image_default(value='')%7D%7D"
+            alt="{{ product.name | escape }}" loading="lazy">
+        </div>
+        <div class="product-details">
+          <div class="product-category">{{ product.category | default(value='Uncategorized') }}</div>
+          <h2 class="product-name">{{ product.name }}</h2>
+          <p class="product-description">{{ product.description }}</p>
+          <div class="product-price">{{ product.price }}</div>
+          <!-- action links (GET-based cart/order simulation) -->
+          <div class="product-actions">
+            <a href="http://10.42.0.216:8000/cart/add/{{product.id}}" class="button button-small">Add to cart</a>
+            <a href="http://10.42.0.216:8000/order/{{product.id}}" class="button button-small button-primary">Order
+              now</a>
+          </div>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+
+    <!-- PAGINATION (server-driven) -->
+    {% if total_pages > 1 %}
+    <nav class="pagination" aria-label="Pagination">
+      <a href="http://10.42.0.216:8000/%7B%7B%20prev_url%20%7D%7D" rel="prev" class="pagination-prev">‹ Prev</a>
+      <span class="pagination-disabled">‹ Prev</span>
+
+      <!-- numbered pages (simple version: show around current) -->
+      {% for p in range(start=1, end=total_pages+1) %}
+      {% if p == current_page %}
+      <span class="current" aria-current="page">{{ p }}</span>
+      <a href="http://10.42.0.216:8000/page={{p}}">{{ p }}</a>
+      {% elif p == current_page - 3 or p == current_page + 3 %}
+      <span class="ellipsis">…</span>
+      {% endif %}
+      {% endfor %}
+
+      <!-- next link -->
+      <a href="http://10.42.0.216:8000/%7B%7B%20next_url%20%7D%7D" rel="next" class="pagination-next">Next ›</a>
+      {% else %}
+      <span class="pagination-disabled">Next ›</span>
+      {% endif %}
+    </nav>
+
+    {% else %}
+    <!-- EMPTY STATE -->
+    <div class="empty-state">
+      <p style="font-size: 1.5rem; margin-bottom: 0.5rem;">🔍 No products found</p>
+      <p>Try adjusting your filters or <a href="http://10.42.0.216:8000/catalog" class="clear-filters"
+          style="padding:0.2rem 1rem; display:inline-block; background:#e2e8f0;">clear all filters</a>.</p>
+    </div>
+    {% endif %}
+  </section>
+</main>
+
+<!-- hidden note: all links/forms are GET and work without JS -->
+<footer style="text-align: center; margin-top: 2rem; color:#64748b; font-size:0.8rem;">
+  <p>Tera product catalog — server‑rendered, no JavaScript required.</p>
+</footer>
+
+{% endblock %}

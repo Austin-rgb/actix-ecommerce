@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>Tera product catalog</title>
+  <style>
+    /* === RESET / MINIMAL BASE === */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      background: #f8fafc;
+      color: #0f172a;
+      line-height: 1.5;
+      padding: 1rem;
+    }
+    a {
+      color: #0f172a;
+      text-decoration: none;
+    }
+    button, .button, input, select {
+      font: inherit;
+      background: white;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 0.5rem 0.75rem;
+    }
+    .button {
+      display: inline-block;
+      background: #f1f5f9;
+      text-align: center;
+      cursor: default; /* no JS, acts as link wrapper */
+      border: 1px solid #94a3b8;
+    }
+    .button-primary {
+      background: #1e293b;
+      color: white;
+      border-color: #0f172a;
+    }
+    .button-small {
+      padding: 0.25rem 0.6rem;
+      font-size: 0.875rem;
+    }
+    /* === LAYOUT: MOBILE-FIRST GRID === */
+    .catalog-layout {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+    /* Filter sidebar – stacked on mobile, inline on larger */
+    .filters-panel {
+      background: #ffffff;
+      padding: 1.5rem 1rem;
+      border-radius: 16px;
+      box-shadow: 0 4px 6px -4px #cbd5e1;
+      border: 1px solid #e2e8f0;
+    }
+    .filter-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+    }
+    .filter-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem 1rem;
+      align-items: flex-end;
+    }
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      min-width: 140px;
+      flex: 1 1 auto;
+    }
+    .filter-group label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      color: #475569;
+      margin-bottom: 0.2rem;
+    }
+    .price-range {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .price-range input {
+      width: 110px;
+    }
+    .filter-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 0.5rem;
+    }
+    /* product grid */
+    .product-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+    /* product card */
+    .product-card {
+      background: white;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.02), 0 2px 4px #e2e8f0;
+      border: 1px solid #edf2f7;
+      display: flex;
+      flex-direction: column;
+      transition: box-shadow 0.1s;
+    }
+    .product-image {
+      background: #f1f5f9;
+      aspect-ratio: 1 / 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #64748b;
+      font-size: 0.9rem;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .product-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      background: #f1f5f9;
+    }
+    /* fallback when image fails or missing */
+    .product-image img[src=""], 
+    .product-image img:not([src]) {
+      opacity: 0;
+    }
+    .product-image:has(img[src=""])::after,
+    .product-image:has(img:not([src]))::after {
+      content: "🖼️ " attr(alt);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #e9eef3;
+      color: #334155;
+      font-size: 1rem;
+      height: 100%;
+      width: 100%;
+    }
+    .product-details {
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+    .product-category {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      color: #64748b;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.25rem;
+    }
+    .product-name {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 0.3rem;
+      line-height: 1.3;
+    }
+    .product-description {
+      color: #334155;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .product-price {
+      font-weight: 700;
+      font-size: 1.3rem;
+      color: #0f172a;
+      margin-bottom: 1rem;
+    }
+    .product-actions {
+      display: flex;
+      gap: 0.6rem;
+      margin-top: auto;
+      flex-wrap: wrap;
+    }
+    .product-actions .button {
+      flex: 1 0 auto;
+      text-align: center;
+      background: #ffffff;
+      border: 1px solid #1e293b;
+      font-weight: 500;
+    }
+    .product-actions .button-primary {
+      background: #1e293b;
+      color: white;
+      border: 1px solid #1e293b;
+    }
+    /* Pagination */
+    .pagination {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.5rem;
+      margin: 2rem 0 1rem;
+    }
+    .pagination a, .pagination span {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 2.5rem;
+      height: 2.5rem;
+      padding: 0 0.5rem;
+      border-radius: 8px;
+      background: white;
+      border: 1px solid #cbd5e1;
+    }
+    .pagination .current {
+      background: #1e293b;
+      color: white;
+      border-color: #0f172a;
+    }
+    .pagination .ellipsis {
+      border: none;
+      background: transparent;
+    }
+    /* empty state */
+    .empty-state {
+      background: white;
+      border-radius: 24px;
+      padding: 3rem 1.5rem;
+      text-align: center;
+      border: 1px dashed #94a3b8;
+      color: #334155;
+      grid-column: 1 / -1;
+    }
+    /* clear filters */
+    .clear-filters {
+      background: #fee2e2;
+      border-color: #f87171;
+      color: #b91c1c;
+      white-space: nowrap;
+    }
+    /* responsive breakpoints */
+    @media (min-width: 600px) {
+      .product-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .filter-form {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: flex-end;
+      }
+      .filter-actions {
+        margin-left: auto;
+        margin-top: 0;
+      }
+    }
+    @media (min-width: 992px) {
+      .catalog-layout {
+        flex-direction: row;
+        align-items: flex-start;
+      }
+      .filters-panel {
+        flex: 0 0 280px;
+        position: sticky;
+        top: 1rem;
+      }
+      .product-grid {
+        flex: 1;
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+    @media (min-width: 1200px) {
+      .product-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+    /* utility */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+  <main class="catalog-layout">
+    <!-- ========== FILTER SIDEBAR (FORM) ========== -->
+    <aside class="filters-panel">
+      <h2 class="sr-only">Filter products</h2>
+      <form action="/catalog" method="GET" class="filter-form">
+        <!-- search field (q) -->
+        <div class="filter-group">
+          <label for="search">Search</label>
+          <input type="text" id="search" name="q" placeholder="name or description..." value="{{ q | default(value='') }}" aria-label="Search by name or description">
+        </div>
+
+        <!-- category dropdown -->
+        <div class="filter-group">
+          <label for="category">Category</label>
+          <select id="category" name="category">
+            <option value="" selected="selected">All categories</option>
+            {% for cat in categories %}
+            <option value="{{ cat }}" {%="" if="" category="=" cat="" %}selected{%="" endif="" %}="">{{ cat }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- min / max price -->
+        <div class="filter-group">
+          <label>Price range</label>
+          <div class="price-range">
+            <input type="number" id="min_price" name="min_price" placeholder="Min" min="0" step="1">
+            <span>–</span>
+            <input type="number" id="max_price" name="max_price" placeholder="Max" min="0" step="1">
+          </div>
+        </div>
+
+        <!-- sort dropdown -->
+        <div class="filter-group">
+          <label for="sort">Sort by</label>
+          <select id="sort" name="sort">
+            <option value="" {%="" if="" sort="=" ""="" %}selected{%="" endif="" %}="">Default</option>
+            <option value="price_asc" {%="" if="" sort="=" "price_asc"="" %}selected{%="" endif="" %}="" selected="selected">Price (low to high)</option>
+            <option value="price_desc" {%="" if="" sort="=" "price_desc"="" %}selected{%="" endif="" %}="">Price (high to low)</option>
+            <option value="name" {%="" if="" sort="=" "name"="" %}selected{%="" endif="" %}="">Name</option>
+          </select>
+        </div>
+
+        <!-- action buttons: submit + clear filters -->
+        <div class="filter-actions">
+          <button type="submit" class="button button-primary">Apply filters</button>
+          <a href="http://10.42.0.216:8000/catalog" class="button clear-filters" role="button">Clear filters</a>
+        </div>
+      </form>
+    </aside>
+
+    <!-- ========== PRODUCT LISTING + PAGINATION ========== -->
+    <section class="catalog-main">
+      <h1 class="sr-only">Product catalog</h1>
+
+      <!-- product grid -->
+      {% if products and products | length &gt; 0 %}
+      <div class="product-grid">
+        {% for product in products %}
+        <article class="product-card">
+          <!-- product image with fallback -->
+          <div class="product-image">
+            <img src="Tera%20product%20catalog_files/%7B%7B%20product.image_default(value='')%7D%7D" alt="{{ product.name | escape }}" loading="lazy">
+          </div>
+          <div class="product-details">
+            <div class="product-category">{{ product.category | default(value='Uncategorized') }}</div>
+            <h2 class="product-name">{{ product.name }}</h2>
+            <p class="product-description">{{ product.description }}</p>
+            <div class="product-price">${{ "%.2f" | format(product.price) }}</div>
+            <!-- action links (GET-based cart/order simulation) -->
+            <div class="product-actions">
+              <a href="http://10.42.0.216:8000/cart/add/%7B%7B%20product.id%20%7D%7D?ref=catalog&amp;{{%20filter_params%20}}" class="button button-small">Add to cart</a>
+              <a href="http://10.42.0.216:8000/order/%7B%7B%20product.id%20%7D%7D?ref=catalog&amp;{{%20filter_params%20}}" class="button button-small button-primary">Order now</a>
+            </div>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+
+      <!-- PAGINATION (server-driven) -->
+      {% if total_pages &gt; 1 %}
+      <nav class="pagination" aria-label="Pagination">
+        {% set current_page = page | default(value=1) %}
+
+        <!-- previous link -->
+        {% if current_page &gt; 1 %}
+          {% set prev_url = "?page=" ~ (current_page - 1) %}
+          <!-- preserve all existing filters -->
+          {% if q %}         {% set prev_url = prev_url ~ "&amp;q=" ~ q %} {% endif %}
+          {% if category %}  {% set prev_url = prev_url ~ "&amp;category=" ~ category %} {% endif %}
+          {% if min_price %} {% set prev_url = prev_url ~ "&amp;min_price=" ~ min_price %} {% endif %}
+          {% if max_price %} {% set prev_url = prev_url ~ "&amp;max_price=" ~ max_price %} {% endif %}
+          {% if sort %}      {% set prev_url = prev_url ~ "&amp;sort=" ~ sort %} {% endif %}
+          <a href="http://10.42.0.216:8000/%7B%7B%20prev_url%20%7D%7D" rel="prev" class="pagination-prev">‹ Prev</a>
+        {% else %}
+          <span class="pagination-disabled">‹ Prev</span>
+        {% endif %}
+
+        <!-- numbered pages (simple version: show around current) -->
+        {% for p in range(start=1, end=total_pages+1) %}
+          {% if p == current_page %}
+            <span class="current" aria-current="page">{{ p }}</span>
+          {% elif p &gt;= current_page - 2 and p &lt;= current_page + 2 %}
+            {% set page_url = "?page=" ~ p %}
+            {% if q %}         {% set page_url = page_url ~ "&amp;q=" ~ q %} {% endif %}
+            {% if category %}  {% set page_url = page_url ~ "&amp;category=" ~ category %} {% endif %}
+            {% if min_price %} {% set page_url = page_url ~ "&amp;min_price=" ~ min_price %} {% endif %}
+            {% if max_price %} {% set page_url = page_url ~ "&amp;max_price=" ~ max_price %} {% endif %}
+            {% if sort %}      {% set page_url = page_url ~ "&amp;sort=" ~ sort %} {% endif %}
+            <a href="http://10.42.0.216:8000/%7B%7B%20page_url%20%7D%7D">{{ p }}</a>
+          {% elif p == 1 or p == total_pages %}
+            {% set page_url = "?page=" ~ p %}
+            {% if q %}         {% set page_url = page_url ~ "&amp;q=" ~ q %} {% endif %}
+            {% if category %}  {% set page_url = page_url ~ "&amp;category=" ~ category %} {% endif %}
+            {% if min_price %} {% set page_url = page_url ~ "&amp;min_price=" ~ min_price %} {% endif %}
+            {% if max_price %} {% set page_url = page_url ~ "&amp;max_price=" ~ max_price %} {% endif %}
+            {% if sort %}      {% set page_url = page_url ~ "&amp;sort=" ~ sort %} {% endif %}
+            <a href="http://10.42.0.216:8000/%7B%7B%20page_url%20%7D%7D">{{ p }}</a>
+          {% elif p == current_page - 3 or p == current_page + 3 %}
+            <span class="ellipsis">…</span>
+          {% endif %}
+        {% endfor %}
+
+        <!-- next link -->
+        {% if current_page &lt; total_pages %}
+          {% set next_url = "?page=" ~ (current_page + 1) %}
+          {% if q %}         {% set next_url = next_url ~ "&amp;q=" ~ q %} {% endif %}
+          {% if category %}  {% set next_url = next_url ~ "&amp;category=" ~ category %} {% endif %}
+          {% if min_price %} {% set next_url = next_url ~ "&amp;min_price=" ~ min_price %} {% endif %}
+          {% if max_price %} {% set next_url = next_url ~ "&amp;max_price=" ~ max_price %} {% endif %}
+          {% if sort %}      {% set next_url = next_url ~ "&amp;sort=" ~ sort %} {% endif %}
+          <a href="http://10.42.0.216:8000/%7B%7B%20next_url%20%7D%7D" rel="next" class="pagination-next">Next ›</a>
+        {% else %}
+          <span class="pagination-disabled">Next ›</span>
+        {% endif %}
+      </nav>
+      {% endif %}
+
+      {% else %}
+      <!-- EMPTY STATE -->
+      <div class="empty-state">
+        <p style="font-size: 1.5rem; margin-bottom: 0.5rem;">🔍 No products found</p>
+        <p>Try adjusting your filters or <a href="http://10.42.0.216:8000/catalog" class="clear-filters" style="padding:0.2rem 1rem; display:inline-block; background:#e2e8f0;">clear all filters</a>.</p>
+      </div>
+      {% endif %}
+    </section>
+  </main>
+
+  <!-- hidden note: all links/forms are GET and work without JS -->
+  <footer style="text-align: center; margin-top: 2rem; color:#64748b; font-size:0.8rem;">
+    <p>Tera product catalog — server‑rendered, no JavaScript required.</p>
+  </footer>
+
+
+</body></html>
