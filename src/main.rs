@@ -1,6 +1,7 @@
 use crate::configs::{EventMessanger, OrdersInventoryAgent, run_migrations};
 use actix_web::{App, HttpServer};
 use auth::{AuthModule, SetupError};
+use cart::Module as CartModule;
 use catalog::{CatalogModule, Config as CatalogConfig};
 use dotenvy::dotenv;
 use inventory::{CreateItemOnInventory, InventoryModule};
@@ -106,6 +107,8 @@ async fn main() -> std::io::Result<()> {
         }
     };
 
+    let cart = CartModule::new();
+
     let host = env::var("HOST").unwrap_or_else(|_| "127.0.0.1".to_string());
     let port = env::var("PORT").unwrap_or_else(|_| "8080".to_string());
     let bind_address = format!("{}:{}", host, port);
@@ -120,6 +123,7 @@ async fn main() -> std::io::Result<()> {
             .configure(|cfg| catalog.config(cfg, "catalog"))
             .configure(|cfg| orders.config(cfg, "orders"))
             .configure(|cfg| inventory.config(cfg, "inventory"))
+            .configure(|cfg| cart.config(cfg, "cart"))
     })
     .bind(&bind_address)?
     .run()
