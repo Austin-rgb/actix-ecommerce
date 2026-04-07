@@ -14,5 +14,6 @@ tenant ={path="../tenant"}
 dotenvy = "0.15.7"
 async-trait = "0.1.89"
 ferrumec={path="../ferrumec"}
-sqlx = { version = "0.7", features = ["sqlite"] }
+sqlx = { version = "0.8.6", default-features = false, features = ["any"] }
 cart = {path="../cart"}
+futures = "0.3.32"

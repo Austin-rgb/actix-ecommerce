@@ -1,16 +1,19 @@
-use crate::configs::{EventMessanger, OrdersInventoryAgent, run_migrations};
+use crate::configs::run_migrations;
 use actix_web::{App, HttpServer};
-use auth::{AuthModule, SetupError};
+use auth::AuthModule;
 use cart::Module as CartModule;
-use catalog::{CatalogModule, Config as CatalogConfig};
+use catalog::CatalogModule;
 use dotenvy::dotenv;
-use inventory::{CreateItemOnInventory, InventoryModule};
+use ferrumec::di::run_async;
+use inventory::InventoryModule;
 use messaging::MessagingModule;
-use orders::{Config, OrdersModule};
+
+use orders::OrdersModule;
 use sqlx::{Pool, Sqlite, sqlite::SqlitePoolOptions};
 use std::{env, process::exit};
-use tenant::{AuthorizModule, InitError};
+use tenant::AuthorizModule;
 mod configs;
+mod logging;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -29,48 +32,45 @@ async fn main() -> std::io::Result<()> {
         Ok(_) => (),
         Err(e) => eprintln!("Error in running migrations: {}", e),
     };
-    let module = match AuthModule::new(db.clone()).await {
-        Ok(m) => m,
+    let module = match run_async(AuthModule::new).await {
+        Ok(m) => m.await,
         Err(e) => {
             eprintln!("Error occured in setting up auth module. diagnosing...");
-            match e {
-                SetupError::Db(e) => eprintln!("Error in database: {}", e),
-                SetupError::Var(e) => eprintln!("Error in getting env var: {}", e),
-            };
+
             exit(1)
         }
     };
-    let authoriz = match AuthorizModule::new(db.clone()).await {
+    let authoriz = match run_async(AuthorizModule::new).await {
         Ok(r) => r,
         Err(e) => {
-            match e {
-                InitError::DbConnection(error) => {
-                    eprintln!("error in connecting to database: {}", error)
-                }
-                InitError::DbInit(error) => eprintln!("Error in initializing database: {}", error),
-                InitError::Secret(var_error) => {
-                    eprintln!("Error in getting SECRET env var: {}", var_error)
-                }
-                InitError::Permissions(_read_error) => {
-                    eprintln!("Error in reading permissions vars",)
-                }
-            }
             eprintln!("Failed to initialize permissions module");
             exit(1)
         }
     };
-    let messages = match MessagingModule::new(db.clone()).await {
-        Ok(m) => m,
+    let messages = match run_async(MessagingModule::new).await {
+        Ok(m) => match m {
+            Ok(r) => r,
+            Err(e) => {
+                eprintln!("failed to initialize messaging module: {}", e);
+                panic!()
+            }
+        },
         Err(e) => {
             eprintln!("failed to initialize messaging module: {}", e);
             panic!()
         }
     };
 
-    let inventory = match InventoryModule::new(db.clone()).await {
-        Ok(r) => r,
+    let inventory = match run_async(InventoryModule::new).await {
+        Ok(r) => match r.await {
+            Ok(r) => r,
+            Err(e) => {
+                eprintln!("failed to initialize inventory module: {}", e);
+                panic!()
+            }
+        },
         Err(e) => {
-            eprintln!("Error in initializing inventory module: {}", e);
+            eprintln!("Env di failed for inventory module: {}", e);
             panic!()
         }
     };
@@ -79,30 +79,31 @@ async fn main() -> std::io::Result<()> {
         .add_permissions("*".to_string(), catalog_perms)
         .await
         .expect("an error occured in adding catalog's perms");
-    let catalog_config = CatalogConfig::new()
-        .with_on_create(Box::new(CreateItemOnInventory {
-            service: inventory.service.clone(),
-        }))
-        .with_perms(catalog_perms);
-    let catalog = match CatalogModule::new(catalog_config).await {
-        Ok(c) => c,
+
+    let catalog = match run_async(CatalogModule::new).await {
+        Ok(c) => match c.await {
+            Ok(r) => r,
+            Err(e) => {
+                eprintln!("failed to initialize catalog module: {}", e);
+                panic!()
+            }
+        },
         Err(e) => {
             eprintln!("failed to initialize catalog module: {}", e);
             panic!()
         }
     };
 
-    let orders_config = Config::new()
-        .with_event_handler(Box::new(EventMessanger {
-            messenger: messages.clone(),
-        }))
-        .with_inventory_agent(Box::new(OrdersInventoryAgent {
-            inventory_module: inventory.clone(),
-        }));
-    let orders = match OrdersModule::new(orders_config).await {
-        Ok(o) => o,
+    let orders = match run_async(OrdersModule::new).await {
+        Ok(o) => match o.await {
+            Ok(r) => r,
+            Err(e) => {
+                eprintln!("Failed to initialize orders module: {}", e);
+                panic!()
+            }
+        },
         Err(e) => {
-            eprintln!("Error occured in initializing orders module: {}", e);
+            eprintln!("Env di failed orders module: {}", e);
             panic!()
         }
     };
@@ -117,6 +118,7 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         App::new()
+            .wrap(logging::LoggingMiddleware)
             .configure(|cfg| module.config(cfg, "auth"))
             .configure(|cfg| authoriz.config(cfg, "permissions"))
             .configure(|cfg| messages.config(cfg, "messages"))

@@ -1,10 +1,11 @@
 {% extends "base.html" %}
 {% block content %}
+<script src="/app/checkout-bar.js"></script>
 <main class="catalog-layout">
   <!-- ========== FILTER SIDEBAR (FORM) ========== -->
   <aside class="filters-panel">
     <h2 class="sr-only">Filter products</h2>
-    <form action="/catalog" method="GET" class="filter-form">
+    <form action="/" method="GET" class="filter-form">
       <!-- search field (q) -->
       <div class="filter-group">
         <label for="search">Search</label>
@@ -48,10 +49,11 @@
 
       <!-- action buttons: submit + clear filters -->
       <div class="filter-actions">
-        <button type="submit" class="button button-primary">Apply filters</button>
-        <a href="http://10.42.0.216:8000/catalog" class="button clear-filters" role="button">Clear filters</a>
+        <button id="apply-filters" type="submit" class="button button-primary">Apply filters</button>
+        <a href="/" class="button clear-filters" role="button">Clear filters</a>
       </div>
     </form>
+    <checkout-bar checkout-url="/app/checkout/"></checkout-bar>
   </aside>
 
   <!-- ========== PRODUCT LISTING + PAGINATION ========== -->
@@ -65,7 +67,7 @@
       <article class="product-card">
         <!-- product image with fallback -->
         <div class="product-image">
-          <img src="Tera%20product%20catalog_files/%7B%7B%20product.image_default(value='')%7D%7D"
+          <img src="{{ product.image | default(value='https://picsum.photos/400/400') }}"
             alt="{{ product.name | escape }}" loading="lazy">
         </div>
         <div class="product-details">
@@ -75,8 +77,9 @@
           <div class="product-price">{{ product.price }}</div>
           <!-- action links (GET-based cart/order simulation) -->
           <div class="product-actions">
-            <a href="http://10.42.0.216:8000/cart/add/{{product.id}}" class="button button-small">Add to cart</a>
-            <a href="http://10.42.0.216:8000/order/{{product.id}}" class="button button-small button-primary">Order
+            <a href="/api/cart/add?product={{product.id}}&qty=1" class="button button-small add-to-cart">Add to
+              cart</a>
+            <a href="/order/{{product.id}}" class="button button-small button-primary start-order">Order
               now</a>
           </div>
         </div>
@@ -87,21 +90,21 @@
     <!-- PAGINATION (server-driven) -->
     {% if total_pages > 1 %}
     <nav class="pagination" aria-label="Pagination">
-      <a href="http://10.42.0.216:8000/%7B%7B%20prev_url%20%7D%7D" rel="prev" class="pagination-prev">‹ Prev</a>
+      <a href="/%7B%7B%20prev_url%20%7D%7D" rel="prev" class="pagination-prev">‹ Prev</a>
       <span class="pagination-disabled">‹ Prev</span>
 
       <!-- numbered pages (simple version: show around current) -->
       {% for p in range(start=1, end=total_pages+1) %}
       {% if p == current_page %}
       <span class="current" aria-current="page">{{ p }}</span>
-      <a href="http://10.42.0.216:8000/page={{p}}">{{ p }}</a>
+      <a href="/?page={{p}}">{{ p }}</a>
       {% elif p == current_page - 3 or p == current_page + 3 %}
       <span class="ellipsis">…</span>
       {% endif %}
       {% endfor %}
 
       <!-- next link -->
-      <a href="http://10.42.0.216:8000/%7B%7B%20next_url%20%7D%7D" rel="next" class="pagination-next">Next ›</a>
+      <a href="/%7B%7B%20next_url%20%7D%7D" rel="next" class="pagination-next">Next ›</a>
       {% else %}
       <span class="pagination-disabled">Next ›</span>
       {% endif %}
@@ -111,7 +114,7 @@
     <!-- EMPTY STATE -->
     <div class="empty-state">
       <p style="font-size: 1.5rem; margin-bottom: 0.5rem;">🔍 No products found</p>
-      <p>Try adjusting your filters or <a href="http://10.42.0.216:8000/catalog" class="clear-filters"
+      <p>Try adjusting your filters or <a href="/" class="clear-filters"
           style="padding:0.2rem 1rem; display:inline-block; background:#e2e8f0;">clear all filters</a>.</p>
     </div>
     {% endif %}
@@ -122,5 +125,5 @@
 <footer style="text-align: center; margin-top: 2rem; color:#64748b; font-size:0.8rem;">
   <p>Tera product catalog — server‑rendered, no JavaScript required.</p>
 </footer>
-
+<script src="/app/catalog.js"></script>
 {% endblock %}
