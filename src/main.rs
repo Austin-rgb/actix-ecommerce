@@ -35,7 +35,7 @@ async fn main() -> std::io::Result<()> {
     let module = match run_async(AuthModule::new).await {
         Ok(m) => m.await,
         Err(e) => {
-            eprintln!("Error occured in setting up auth module. diagnosing...");
+            eprintln!("Error occured in setting up auth module: {}",e);
 
             exit(1)
         }
@@ -43,7 +43,7 @@ async fn main() -> std::io::Result<()> {
     let authoriz = match run_async(AuthorizModule::new).await {
         Ok(r) => r,
         Err(e) => {
-            eprintln!("Failed to initialize permissions module");
+            eprintln!("Failed to initialize permissions module: {}",e);
             exit(1)
         }
     };
@@ -74,11 +74,6 @@ async fn main() -> std::io::Result<()> {
             panic!()
         }
     };
-    let catalog_perms = CatalogModule::get_permissions();
-    let catalog_perms = authoriz
-        .add_permissions("*".to_string(), catalog_perms)
-        .await
-        .expect("an error occured in adding catalog's perms");
 
     let catalog = match run_async(CatalogModule::new).await {
         Ok(c) => match c.await {
