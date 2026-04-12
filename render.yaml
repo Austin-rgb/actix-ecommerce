@@ -13,7 +13,7 @@ services:
       - key: DATABASE_URL
         value: sqlite:/var/data/database.db
 
-  - type: private-service
+  - type: web
     name: nats
     runtime: image
     image:
