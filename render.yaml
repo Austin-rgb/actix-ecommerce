@@ -6,10 +6,7 @@ services:
       url: ghcr.io/austin-rgb/actix-ecommerce:latest
     envVars:
       - key: NATS_URL
-        fromService:
-          name: nats
-          type: service
-          property: hostport
+        value: nats://nats:4222
       - key: DATABASE_URL
         value: sqlite:/var/data/database.db
 
