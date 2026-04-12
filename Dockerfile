@@ -13,7 +13,7 @@ RUN git config --global url."https://${GITHUB_TOKEN}:x-oauth-basic@github.com/".
 ARG DATABASE_URL
 
 RUN cargo install sqlx-cli -F sqlite
-RUN cargo sqlx migrate run --database-url sqlite:database.db/?mode=rwc
+RUN cargo sqlx migrate run
 RUN cargo build --release
 
 # Stage 2: Runtime
