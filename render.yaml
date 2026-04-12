@@ -18,4 +18,3 @@ services:
     runtime: image
     image:
       url: nats:2.10-alpine
-    command: -js
