@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: actix-api
+    runtime: image
+    image:
+      url: ghcr.io/austin-rgb/actix-ecommerce:latest
+    envVars:
+      - key: NATS_URL
+        fromService:
+          name: nats
+          type: service
+          property: hostport
+      - key: DATABASE_URL
+        value: sqlite:/var/data/database.db
+
+  - type: private-service
+    name: nats
+    runtime: image
+    image:
+      url: nats:2.10-alpine
+    command: -js
