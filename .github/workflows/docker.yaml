@@ -32,6 +32,7 @@ jobs:
 
       - name: Build and push Docker image
         run: |
+          export DATABASE_URL=database.db
           docker build \
             --platform linux/amd64 \
             -t ${{ steps.meta.outputs.latest_tag }} \
