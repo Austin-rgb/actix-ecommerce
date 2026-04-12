@@ -8,7 +8,7 @@ services:
       - key: NATS_URL
         value: nats://nats:4222
       - key: DATABASE_URL
-        value: sqlite:/var/data/database.db
+        value: sqlite:database.db/?mode=rwc
 
   - type: web
     name: nats
