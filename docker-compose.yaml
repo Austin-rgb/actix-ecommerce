@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  # NATS message broker
+  nats:
+    image: nats:2.10-alpine
+    ports:
+      - "4222:4222"   # Client connections
+      - "8222:8222"   # HTTP monitoring
+      - "6222:6222"   # Cluster routing
+    command:
+      - -js
+      - -m
+      - "8222"
+    volumes:
+      - ./nats-data:/data
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  # Your Actix E-commerce application
+  actix-ecommerce:
+    image: ghcr.io/austin-rgb/actix-ecommerce:latest
+    ports:
+      - "8080:8080"
+    environment:
+      - DATABASE_URL=sqlite:database.db
+      - NATS_URL=nats://nats:4222
+      # If your app needs NATS credentials:
+      # - NATS_USER=your_user
+      # - NATS_PASSWORD=your_password
+    volumes:
+      - ./data:/app/data
+    depends_on:
+      - nats
+    restart: unless-stopped
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
