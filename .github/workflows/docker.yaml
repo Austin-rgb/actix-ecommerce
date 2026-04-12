@@ -35,7 +35,7 @@ jobs:
           export DATABASE_URL=database.db
           docker build \
             --platform linux/amd64 \
-            --build-arg GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} \
+            --build-arg GITHUB_TOKEN=${{ secrets.GH_TOKEN }} \
             --build-arg DATABASE_URL=sqlite:database.db/?mode=rwc \
             -t ${{ steps.meta.outputs.latest_tag }} \
             -t ${{ steps.meta.outputs.sha_tag }} \
