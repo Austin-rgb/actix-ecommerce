@@ -1,6 +1,5 @@
 # Stage 1: Build
-FROM rust:latest as builder
-
+FROM rust:1.94-bookworm as builder
 WORKDIR /app
 COPY . .
 
@@ -12,6 +11,7 @@ RUN git config --global url."https://${GITHUB_TOKEN}:x-oauth-basic@github.com/".
 
 # Run migrations 
 ARG DATABASE_URL
+ENV DATABASE_URL=${DATABASE_URL}
 RUN cargo install sqlx-cli -F sqlite
 RUN cargo sqlx migrate run 
 RUN cargo build --release
