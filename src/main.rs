@@ -6,8 +6,8 @@ use catalog::CatalogModule;
 use dotenvy::dotenv;
 use ferrumec::di::run_async;
 use inventory::InventoryModule;
-use messaging::MessagingModule;
-
+use push::Config;
+use std::sync::Arc;
 use orders::OrdersModule;
 use sqlx::{Pool, Sqlite, sqlite::SqlitePoolOptions};
 use std::{env, process::exit};
@@ -35,7 +35,7 @@ async fn main() -> std::io::Result<()> {
     let module = match run_async(AuthModule::new).await {
         Ok(m) => m.await,
         Err(e) => {
-            eprintln!("Error occured in setting up auth module: {}",e);
+            eprintln!("Error occured in setting up auth module: {}", e);
 
             exit(1)
         }
@@ -43,23 +43,17 @@ async fn main() -> std::io::Result<()> {
     let authoriz = match run_async(AuthorizModule::new).await {
         Ok(r) => r,
         Err(e) => {
-            eprintln!("Failed to initialize permissions module: {}",e);
+            eprintln!("Failed to initialize permissions module: {}", e);
             exit(1)
         }
     };
-    let messages = match run_async(MessagingModule::new).await {
-        Ok(m) => match m {
-            Ok(r) => r,
-            Err(e) => {
-                eprintln!("failed to initialize messaging module: {}", e);
-                panic!()
-            }
-        },
+    let messages = Arc::new(match run_async(Config::new).await {
+        Ok(m) => m,
         Err(e) => {
             eprintln!("failed to initialize messaging module: {}", e);
             panic!()
         }
-    };
+    });
 
     let inventory = match run_async(InventoryModule::new).await {
         Ok(r) => match r.await {
