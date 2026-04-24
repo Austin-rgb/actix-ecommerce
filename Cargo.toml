@@ -41,5 +41,5 @@ notification = {path="../notification"}
 #[patch."https://github.com/Austin-rgb/cart"]
 #cart = { path = "../cart" }
 
-[patch."https://github.com/Austin-rgb/ferrumec"]
-ferrumec = { path = "../ferrumec" }
+#[patch."https://github.com/Austin-rgb/ferrumec"]
+#ferrumec = { path = "../ferrumec" }
