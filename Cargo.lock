@@ -49,7 +49,6 @@ name = "actix-ecommerce"
 version = "0.1.0"
 dependencies = [
  "actix-web",
- "async-trait",
  "auth",
  "cart",
  "catalog",
@@ -57,6 +56,7 @@ dependencies = [
  "ferrumec",
  "futures",
  "inventory",
+ "notification",
  "orders",
  "push",
  "sqlx",
@@ -269,7 +269,7 @@ dependencies = [
  "futures-util",
  "jsonwebtoken",
  "libsigners",
- "reqwest",
+ "reqwest 0.13.2",
 ]
 
 [[package]]
@@ -353,7 +353,7 @@ version = "1.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "40c48f72fd53cd289104fc64099abca73db4166ad86ea0b4341abe65af83dadc"
 dependencies = [
- "windows-sys 0.60.2",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -364,7 +364,7 @@ checksum = "291e6a250ff86cd4a820112fb8898808a366d8f9f58ce16d1f538353ad55747d"
 dependencies = [
  "anstyle",
  "once_cell_polyfill",
- "windows-sys 0.60.2",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -712,6 +712,7 @@ dependencies = [
 [[package]]
 name = "cart"
 version = "0.1.0"
+source = "git+https://github.com/Austin-rgb/cart#e39cbc580960efe0e8f18d9b573f32059eed2c63"
 dependencies = [
  "actix-web",
  "moka",
@@ -722,6 +723,7 @@ dependencies = [
 [[package]]
 name = "catalog"
 version = "0.1.0"
+source = "git+https://github.com/Ferrumec/catalog#74fc8af7148b3ae468c520746d8dbba8f79d8ff7"
 dependencies = [
  "actix-web",
  "async-trait",
@@ -1219,6 +1221,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "emailgrid"
+version = "0.1.0"
+source = "git+https://github.com/Austin-rgb/emailgrid#90c5e06895a00b17294afff7516aaa6927cd5393"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "dotenvy",
+ "moka",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "tera",
+]
+
+[[package]]
 name = "encoding_rs"
 version = "0.8.35"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1263,7 +1281,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
- "windows-sys 0.60.2",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -1301,7 +1319,7 @@ dependencies = [
 [[package]]
 name = "event-stream"
 version = "0.1.0"
-source = "git+https://github.com/Austin-rgb/event-stream#92e2e0eb618509cadde71d8118b8e2549be406bb"
+source = "git+https://github.com/Austin-rgb/event-stream#2556775d3ce15dc52bc608aa214d969541e22b6f"
 dependencies = [
  "async-nats",
  "async-trait",
@@ -1319,10 +1337,12 @@ checksum = "9f1f227452a390804cdb637b74a86990f2a7d7ba4b7d5693aac9b4dd6defd8d6"
 [[package]]
 name = "ferrumec"
 version = "0.1.0"
+source = "git+https://github.com/Austin-rgb/ferrumec#f8a3047d0c7016ce1b5f440c4ca65e06bd034b97"
 dependencies = [
  "actix-web",
  "anyhow",
  "async-trait",
+ "emailgrid",
  "event-stream",
  "futures-util",
  "libsigners",
@@ -1804,6 +1824,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "hyper-tls"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "70206fc6890eaca9fde8a0bf71caa2ddfc9fe045ac9e5c70df101a7dbde866e0"
+dependencies = [
+ "bytes",
+ "http-body-util",
+ "hyper",
+ "hyper-util",
+ "native-tls",
+ "tokio",
+ "tokio-native-tls",
+ "tower-service",
+]
+
+[[package]]
 name = "hyper-util"
 version = "0.1.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2007,7 +2043,6 @@ dependencies = [
 [[package]]
 name = "inventory"
 version = "0.1.0"
-source = "git+https://github.com/Ferrumec/inventory#9911e16decc20ec37667bc6aeb9c914f5f9014f6"
 dependencies = [
  "actix-web",
  "auth_middleware",
@@ -2176,9 +2211,9 @@ checksum = "09edd9e8b54e49e587e4f6295a7d29c3ea94d469cb40ab8ca70b288248a81db2"
 
 [[package]]
 name = "libc"
-version = "0.2.185"
+version = "0.2.186"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "52ff2c0fe9bc6cb6b14a0592c2ff4fa9ceb83eea9db979b0487cd054946a2b8f"
+checksum = "68ab91017fe16c622486840e4c83c9a37afeff978bd239b5293d61ece587de66"
 
 [[package]]
 name = "libm"
@@ -2384,6 +2419,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "notification"
+version = "0.1.0"
+dependencies = [
+ "actix-web",
+ "async-trait",
+ "chrono",
+ "emailgrid",
+ "event-stream",
+ "ferrumec",
+ "push",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
 name = "nuid"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2522,6 +2575,7 @@ dependencies = [
 [[package]]
 name = "orders"
 version = "0.1.0"
+source = "git+https://github.com/Austin-rgb/orders#a93294c14ee6395ae4f5c169a526c66cf73864b8"
 dependencies = [
  "actix-web",
  "async-trait",
@@ -2808,13 +2862,14 @@ dependencies = [
 [[package]]
 name = "push"
 version = "0.1.0"
+source = "git+https://github.com/Austin-rgb/push#891a40cdbdb067f4789c30bef63dc63ff93d4ca7"
 dependencies = [
  "actix",
  "actix-web",
  "actix-web-actors",
  "actixutils",
  "ferrumec",
- "reqwest",
+ "reqwest 0.13.2",
  "serde",
  "serde_json",
  "uuid",
@@ -3028,6 +3083,46 @@ checksum = "dc897dd8d9e8bd1ed8cdad82b5966c3e0ecae09fb1907d58efaa013543185d0a"
 
 [[package]]
 name = "reqwest"
+version = "0.12.28"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "eddd3ca559203180a307f12d114c268abf583f59b03cb906fd0b3ff8646c1147"
+dependencies = [
+ "base64 0.22.1",
+ "bytes",
+ "encoding_rs",
+ "futures-core",
+ "h2 0.4.13",
+ "http 1.4.0",
+ "http-body",
+ "http-body-util",
+ "hyper",
+ "hyper-rustls",
+ "hyper-tls",
+ "hyper-util",
+ "js-sys",
+ "log",
+ "mime",
+ "native-tls",
+ "percent-encoding",
+ "pin-project-lite",
+ "rustls-pki-types",
+ "serde",
+ "serde_json",
+ "serde_urlencoded",
+ "sync_wrapper",
+ "tokio",
+ "tokio-native-tls",
+ "tower",
+ "tower-http",
+ "tower-service",
+ "url",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
+]
+
+[[package]]
+name = "reqwest"
 version = "0.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ab3f43e3283ab1488b624b44b0e988d0acea0b3214e694730a055cb6b2efa801"
@@ -3132,7 +3227,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys",
- "windows-sys 0.60.2",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -3190,7 +3285,7 @@ dependencies = [
  "security-framework",
  "security-framework-sys",
  "webpki-root-certs",
- "windows-sys 0.60.2",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -3498,7 +3593,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3a766e1110788c36f4fa1c2b71b387a7815aa65f88ce0229841826633d93723e"
 dependencies = [
  "libc",
- "windows-sys 0.60.2",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -3808,12 +3903,13 @@ dependencies = [
  "getrandom 0.4.2",
  "once_cell",
  "rustix",
- "windows-sys 0.60.2",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
 name = "tenant"
 version = "0.1.0"
+source = "git+https://github.com/Austin-rgb/tenant#b633d270e8a41838e7394edd115f29d4ba56b54f"
 dependencies = [
  "actix-web",
  "auth_middleware",
@@ -3970,6 +4066,16 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "tokio-native-tls"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bbae76ab933c85776efabc971569dd6119c580d8f5d448769dec1764bf796ef2"
+dependencies = [
+ "native-tls",
+ "tokio",
 ]
 
 [[package]]
@@ -4495,7 +4601,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.60.2",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]

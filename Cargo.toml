@@ -12,33 +12,34 @@ orders = {git="https://github.com/Austin-rgb/orders"}
 inventory = {git="https://github.com/Ferrumec/inventory"}
 tenant ={git="https://github.com/Austin-rgb/tenant"}
 dotenvy = "0.15.7"
-async-trait = "0.1.89"
 ferrumec={git="https://github.com/Austin-rgb/ferrumec"}
 sqlx = { version = "0.8.6", default-features = false, features = ["any"] }
 cart = {git="https://github.com/Austin-rgb/cart"}
 futures = "0.3.32"
+notification = {path="../notification"}
+
 
 # --- Local overrides ---
-[patch."https://github.com/Austin-rgb/push"]
-push = { path = "../push" }
+#[patch."https://github.com/Austin-rgb/push"]
+#push = { path = "../push" }
 
 #[patch."https://github.com/Ferrumec/auth"]
 #auth = { path = "../auth" }
 
-[patch."https://github.com/Ferrumec/catalog"]
-catalog = { path = "../catalog" }
+#[patch."https://github.com/Ferrumec/catalog"]
+#catalog = { path = "../catalog" }
 
-[patch."https://github.com/Austin-rgb/orders"]
-orders = { path = "../orders" }
+#[patch."https://github.com/Austin-rgb/orders"]
+#orders = { path = "../orders" }
 
-#[patch."https://github.com/Ferrumec/inventory"]
-#inventory = { path = "../inventory" }
+[patch."https://github.com/Ferrumec/inventory"]
+inventory = { path = "../inventory" }
 
-[patch."https://github.com/Austin-rgb/tenant"]
-tenant = { path = "../tenant" }
+#[patch."https://github.com/Austin-rgb/tenant"]
+#tenant = { path = "../tenant" }
 
-[patch."https://github.com/Austin-rgb/cart"]
-cart = { path = "../cart" }
+#[patch."https://github.com/Austin-rgb/cart"]
+#cart = { path = "../cart" }
 
-[patch."https://github.com/Austin-rgb/ferrumec"]
-ferrumec = { path = "../ferrumec" }
+#[patch."https://github.com/Austin-rgb/ferrumec"]
+#ferrumec = { path = "../ferrumec" }

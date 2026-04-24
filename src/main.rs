@@ -12,6 +12,7 @@ use orders::OrdersModule;
 use sqlx::{Pool, Sqlite, sqlite::SqlitePoolOptions};
 use std::{env, process::exit};
 use tenant::AuthorizModule;
+use notification::Module as NotificationModule;
 mod configs;
 mod logging;
 
@@ -97,6 +98,7 @@ async fn main() -> std::io::Result<()> {
         }
     };
 
+let notifiyer = run_async(NotificationModule::new).await;
     let cart = CartModule::new();
 
     let host = env::var("HOST").unwrap_or_else(|_| "127.0.0.1".to_string());
