@@ -32,8 +32,8 @@ notification = {path="../notification"}
 #[patch."https://github.com/Austin-rgb/orders"]
 #orders = { path = "../orders" }
 
-[patch."https://github.com/Ferrumec/inventory"]
-inventory = { path = "../inventory" }
+#[patch."https://github.com/Ferrumec/inventory"]
+#inventory = { path = "../inventory" }
 
 #[patch."https://github.com/Austin-rgb/tenant"]
 #tenant = { path = "../tenant" }
@@ -41,5 +41,5 @@ inventory = { path = "../inventory" }
 #[patch."https://github.com/Austin-rgb/cart"]
 #cart = { path = "../cart" }
 
-#[patch."https://github.com/Austin-rgb/ferrumec"]
-#ferrumec = { path = "../ferrumec" }
+[patch."https://github.com/Austin-rgb/ferrumec"]
+ferrumec = { path = "../ferrumec" }
