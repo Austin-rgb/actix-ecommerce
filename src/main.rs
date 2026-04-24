@@ -98,7 +98,13 @@ async fn main() -> std::io::Result<()> {
         }
     };
 
-let notifiyer = run_async(NotificationModule::new).await;
+let notifiyer = match run_async(NotificationModule::new).await{
+Ok(r) => r.await,
+Err(e) => {
+eprintln!("failed to initialize notifications module: {}", e);
+panic!()
+}
+};
     let cart = CartModule::new();
 
     let host = env::var("HOST").unwrap_or_else(|_| "127.0.0.1".to_string());
@@ -117,6 +123,7 @@ let notifiyer = run_async(NotificationModule::new).await;
             .configure(|cfg| orders.config(cfg, "orders"))
             .configure(|cfg| inventory.config(cfg, "inventory"))
             .configure(|cfg| cart.config(cfg, "cart"))
+            .configure(|cfg| notifiyer.config(cfg,"notifications"))
     })
     .bind(&bind_address)?
     .run()
