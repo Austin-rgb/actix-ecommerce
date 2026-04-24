@@ -16,7 +16,7 @@ ferrumec={git="https://github.com/Austin-rgb/ferrumec"}
 sqlx = { version = "0.8.6", default-features = false, features = ["any"] }
 cart = {git="https://github.com/Austin-rgb/cart"}
 futures = "0.3.32"
-notification = {path="../notification"}
+notification = {git="https://github.com/Austin-rgb/notification"}
 
 
 # --- Local overrides ---
