@@ -1,39 +1,21 @@
-use crate::configs::run_migrations;
 use actix_web::{App, HttpServer};
-use auth::AuthModule;
+use auth::Module as AuthModule;
 use cart::Module as CartModule;
 use catalog::CatalogModule;
 use dotenvy::dotenv;
-use ferrumec::di::run_async;
+use ferrumec::di::inject as run;
 use inventory::InventoryModule;
-use push::Config;
-use std::sync::Arc;
-use orders::OrdersModule;
-use sqlx::{Pool, Sqlite, sqlite::SqlitePoolOptions};
+use notification::Module as NotificationModule;
+use orders::Module as OrdersModule;
 use std::{env, process::exit};
 use tenant::AuthorizModule;
-use notification::Module as NotificationModule;
-mod configs;
 mod logging;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
-    let db: Pool<Sqlite> = match SqlitePoolOptions::new()
-        .connect("sqlite:database.db/?mode=rwc")
-        .await
-    {
-        Ok(r) => r,
-        Err(e) => {
-            eprintln!("could not connect to database: {}", e);
-            exit(1)
-        }
-    };
-    match run_migrations(&db).await {
-        Ok(_) => (),
-        Err(e) => eprintln!("Error in running migrations: {}", e),
-    };
-    let module = match run_async(AuthModule::new).await {
+
+    let module = match run(AuthModule::new).await {
         Ok(m) => m.await,
         Err(e) => {
             eprintln!("Error occured in setting up auth module: {}", e);
@@ -41,22 +23,15 @@ async fn main() -> std::io::Result<()> {
             exit(1)
         }
     };
-    let authoriz = match run_async(AuthorizModule::new).await {
+    let authoriz = match run(AuthorizModule::new).await {
         Ok(r) => r,
         Err(e) => {
             eprintln!("Failed to initialize permissions module: {}", e);
             exit(1)
         }
     };
-    let messages = Arc::new(match run_async(Config::new).await {
-        Ok(m) => m,
-        Err(e) => {
-            eprintln!("failed to initialize messaging module: {}", e);
-            panic!()
-        }
-    });
 
-    let inventory = match run_async(InventoryModule::new).await {
+    let inventory = match run(InventoryModule::new).await {
         Ok(r) => match r.await {
             Ok(r) => r,
             Err(e) => {
@@ -70,7 +45,7 @@ async fn main() -> std::io::Result<()> {
         }
     };
 
-    let catalog = match run_async(CatalogModule::new).await {
+    let catalog = match run(CatalogModule::new).await {
         Ok(c) => match c.await {
             Ok(r) => r,
             Err(e) => {
@@ -84,7 +59,7 @@ async fn main() -> std::io::Result<()> {
         }
     };
 
-    let orders = match run_async(OrdersModule::new).await {
+    let orders = match run(OrdersModule::new).await {
         Ok(o) => match o.await {
             Ok(r) => r,
             Err(e) => {
@@ -98,13 +73,13 @@ async fn main() -> std::io::Result<()> {
         }
     };
 
-let notifiyer = match run_async(NotificationModule::new).await{
-Ok(r) => r.await,
-Err(e) => {
-eprintln!("failed to initialize notifications module: {}", e);
-panic!()
-}
-};
+    let notifiyer = match run(NotificationModule::new).await {
+        Ok(r) => r.await,
+        Err(e) => {
+            eprintln!("failed to initialize notifications module: {}", e);
+            panic!()
+        }
+    };
     let cart = CartModule::new();
 
     let host = env::var("HOST").unwrap_or_else(|_| "127.0.0.1".to_string());
@@ -118,12 +93,11 @@ panic!()
             .wrap(logging::LoggingMiddleware)
             .configure(|cfg| module.config(cfg, "auth"))
             .configure(|cfg| authoriz.config(cfg, "permissions"))
-            .configure(|cfg| messages.config(cfg, "messages"))
             .configure(|cfg| catalog.config(cfg, "catalog"))
             .configure(|cfg| orders.config(cfg, "orders"))
             .configure(|cfg| inventory.config(cfg, "inventory"))
             .configure(|cfg| cart.config(cfg, "cart"))
-            .configure(|cfg| notifiyer.config(cfg,"notifications"))
+            .configure(|cfg| notifiyer.config(cfg, "notifications"))
     })
     .bind(&bind_address)?
     .run()
