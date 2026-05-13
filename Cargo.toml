@@ -17,7 +17,6 @@ cart = {git="https://github.com/Austin-rgb/cart"}
 futures = "0.3.32"
 notification = {git="https://github.com/Ferrumec/notification"}
 
-
 # --- Local overrides ---
 [patch."https://github.com/Austin-rgb/push"]
 push = { path = "../push" }
