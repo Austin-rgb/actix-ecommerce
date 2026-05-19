@@ -5,7 +5,6 @@ edition = "2024"
 
 [dependencies]
 actix-web = "4"
-push = {git="https://github.com/Austin-rgb/push"}
 auth = {git="https://github.com/Ferrumec/auth"}
 catalog = {git="https://github.com/Ferrumec/catalog"}
 orders = {git="https://github.com/Austin-rgb/orders"}
@@ -16,10 +15,9 @@ ferrumec={git="https://github.com/Austin-rgb/ferrumec"}
 cart = {git="https://github.com/Austin-rgb/cart"}
 futures = "0.3.32"
 notification = {git="https://github.com/Ferrumec/notification"}
-
+tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
+tracing = "0.1.44"
 # --- Local overrides ---
-[patch."https://github.com/Austin-rgb/push"]
-push = { path = "../push" }
 
 [patch."https://github.com/Ferrumec/auth"]
 auth = { path = "../auth" }

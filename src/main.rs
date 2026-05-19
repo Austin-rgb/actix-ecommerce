@@ -3,80 +3,89 @@ use auth::Module as AuthModule;
 use cart::Module as CartModule;
 use catalog::CatalogModule;
 use dotenvy::dotenv;
-use ferrumec::di::inject as run;
+use ferrumec::di::Inject;
+use ferrumec::di::EnvContext;
 use inventory::InventoryModule;
 use notification::Module as NotificationModule;
 use orders::Module as OrdersModule;
 use std::{env, process::exit};
 use tenant::AuthorizModule;
+
+use tracing_subscriber::{EnvFilter, fmt, prelude::*};
+
 mod logging;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
+    tracing_subscriber::registry()
+        .with(fmt::layer())
+        .with(EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into()))
+        .init();
 
-    let module = match run(AuthModule::new).await {
+    let di_ctx = EnvContext::default();
+    let module = match di_ctx.inject(AuthModule::new).await {
         Ok(m) => m.await,
         Err(e) => {
-            eprintln!("Error occured in setting up auth module: {}", e);
+            tracing::error!("Error occured in setting up auth module: {}", e);
 
             exit(1)
         }
     };
-    let authoriz = match run(AuthorizModule::new).await {
+    let authoriz = match di_ctx.inject(AuthorizModule::new).await {
         Ok(r) => r,
         Err(e) => {
-            eprintln!("Failed to initialize permissions module: {}", e);
+            tracing::error!("Failed to initialize permissions module: {}", e);
             exit(1)
         }
     };
 
-    let inventory = match run(InventoryModule::new).await {
+    let inventory = match di_ctx.inject(InventoryModule::new).await {
         Ok(r) => match r.await {
             Ok(r) => r,
             Err(e) => {
-                eprintln!("failed to initialize inventory module: {}", e);
+                tracing::error!("failed to initialize inventory module: {}", e);
                 panic!()
             }
         },
         Err(e) => {
-            eprintln!("Env di failed for inventory module: {}", e);
+            tracing::error!("Env di failed for inventory module: {}", e);
             panic!()
         }
     };
 
-    let catalog = match run(CatalogModule::new).await {
+    let catalog = match di_ctx.inject(CatalogModule::new).await {
         Ok(c) => match c.await {
             Ok(r) => r,
             Err(e) => {
-                eprintln!("failed to initialize catalog module: {}", e);
+                tracing::error!("failed to initialize catalog module: {}", e);
                 panic!()
             }
         },
         Err(e) => {
-            eprintln!("failed to initialize catalog module: {}", e);
+            tracing::error!("failed to initialize catalog module: {}", e);
             panic!()
         }
     };
 
-    let orders = match run(OrdersModule::new).await {
+    let orders = match di_ctx.inject(OrdersModule::new).await {
         Ok(o) => match o.await {
             Ok(r) => r,
             Err(e) => {
-                eprintln!("Failed to initialize orders module: {}", e);
+                tracing::error!("Failed to initialize orders module: {}", e);
                 panic!()
             }
         },
         Err(e) => {
-            eprintln!("Env di failed orders module: {}", e);
+            tracing::error!("Env di failed orders module: {}", e);
             panic!()
         }
     };
 
-    let notifiyer = match run(NotificationModule::new).await {
+    let notifiyer = match di_ctx.inject(NotificationModule::new).await {
         Ok(r) => r.await,
         Err(e) => {
-            eprintln!("failed to initialize notifications module: {}", e);
+            tracing::error!("failed to initialize notifications module: {}", e);
             panic!()
         }
     };
