@@ -3,8 +3,7 @@ use auth::Module as AuthModule;
 use cart::Module as CartModule;
 use catalog::CatalogModule;
 use dotenvy::dotenv;
-use ferrumec::di::Inject;
-use ferrumec::di::EnvContext;
+use ferrumec::Dependencies;
 use inventory::InventoryModule;
 use notification::Module as NotificationModule;
 use orders::Module as OrdersModule;
@@ -23,72 +22,41 @@ async fn main() -> std::io::Result<()> {
         .with(EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into()))
         .init();
 
-    let di_ctx = EnvContext::default();
-    let module = match di_ctx.inject(AuthModule::new).await {
-        Ok(m) => m.await,
-        Err(e) => {
-            tracing::error!("Error occured in setting up auth module: {}", e);
-
-            exit(1)
-        }
+    let di_ctx = Dependencies::new();
+    let module = di_ctx.inject(AuthModule::new).await;
+    let authoriz = di_ctx.inject(AuthorizModule::new); /*{
+    Ok(r) => r,
+    Err(e) => {
+    tracing::error!("Failed to initialize permissions module: {}", e);
+    exit(1)
+    }
     };
-    let authoriz = match di_ctx.inject(AuthorizModule::new).await {
+     */
+    let inventory = match di_ctx.inject(InventoryModule::new).await {
         Ok(r) => r,
         Err(e) => {
-            tracing::error!("Failed to initialize permissions module: {}", e);
+            tracing::error!("Could not initialize inventory: {e}");
             exit(1)
-        }
-    };
-
-    let inventory = match di_ctx.inject(InventoryModule::new).await {
-        Ok(r) => match r.await {
-            Ok(r) => r,
-            Err(e) => {
-                tracing::error!("failed to initialize inventory module: {}", e);
-                panic!()
-            }
-        },
-        Err(e) => {
-            tracing::error!("Env di failed for inventory module: {}", e);
-            panic!()
         }
     };
 
     let catalog = match di_ctx.inject(CatalogModule::new).await {
-        Ok(c) => match c.await {
-            Ok(r) => r,
-            Err(e) => {
-                tracing::error!("failed to initialize catalog module: {}", e);
-                panic!()
-            }
-        },
+        Ok(r) => r,
         Err(e) => {
-            tracing::error!("failed to initialize catalog module: {}", e);
-            panic!()
+            tracing::error!("Could not initialize orders module; {e}");
+            exit(1)
         }
     };
 
     let orders = match di_ctx.inject(OrdersModule::new).await {
-        Ok(o) => match o.await {
-            Ok(r) => r,
-            Err(e) => {
-                tracing::error!("Failed to initialize orders module: {}", e);
-                panic!()
-            }
-        },
+        Ok(r) => r,
         Err(e) => {
-            tracing::error!("Env di failed orders module: {}", e);
-            panic!()
+            tracing::error!("Could not initialize orders module; {e}");
+            exit(1)
         }
     };
 
-    let notifiyer = match di_ctx.inject(NotificationModule::new).await {
-        Ok(r) => r.await,
-        Err(e) => {
-            tracing::error!("failed to initialize notifications module: {}", e);
-            panic!()
-        }
-    };
+    let notifiyer = di_ctx.inject(NotificationModule::new).await;
     let cart = CartModule::new();
 
     let host = env::var("HOST").unwrap_or_else(|_| "127.0.0.1".to_string());
