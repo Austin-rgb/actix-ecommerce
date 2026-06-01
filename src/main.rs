@@ -23,40 +23,71 @@ async fn main() -> std::io::Result<()> {
         .init();
 
     let di_ctx = Dependencies::new();
-    let module = di_ctx.inject(AuthModule::new).await;
-    let authoriz = di_ctx.inject(AuthorizModule::new); /*{
-    Ok(r) => r,
-    Err(e) => {
-    tracing::error!("Failed to initialize permissions module: {}", e);
-    exit(1)
-    }
+    let module = match di_ctx.inject(AuthModule::new) {
+        Ok(r) => r.await,
+        Err(e) => {
+            tracing::error!("Failed to di for auth module: {}", e);
+            exit(1)
+        }
     };
-     */
-    let inventory = match di_ctx.inject(InventoryModule::new).await {
+    let authoriz = match di_ctx.inject(AuthorizModule::new) {
         Ok(r) => r,
         Err(e) => {
-            tracing::error!("Could not initialize inventory: {e}");
+            tracing::error!("Failed to di for permissions module: {}", e);
             exit(1)
         }
     };
 
-    let catalog = match di_ctx.inject(CatalogModule::new).await {
-        Ok(r) => r,
+    let inventory = match di_ctx.inject(InventoryModule::new) {
+        Ok(r) => match r.await {
+            Ok(r) => r,
+            Err(e) => {
+                tracing::error!("Could not initialize inventory: {e}");
+                exit(1)
+            }
+        },
         Err(e) => {
-            tracing::error!("Could not initialize orders module; {e}");
+            tracing::error!("Could not di for inventory: {e}");
             exit(1)
         }
     };
 
-    let orders = match di_ctx.inject(OrdersModule::new).await {
-        Ok(r) => r,
+    let catalog = match di_ctx.inject(CatalogModule::new) {
+        Ok(r) => match r.await {
+            Ok(r) => r,
+            Err(e) => {
+                tracing::error!("Could not initialize catalog module: {e}");
+                exit(1)
+            }
+        },
         Err(e) => {
-            tracing::error!("Could not initialize orders module; {e}");
+            tracing::error!("Could not di for catalog module; {e}");
             exit(1)
         }
     };
 
-    let notifiyer = di_ctx.inject(NotificationModule::new).await;
+    let orders = match di_ctx.inject(OrdersModule::new) {
+        Ok(r) => match r.await {
+            Ok(r) => r,
+            Err(e) => {
+                tracing::error!("Could not initialize orders module: {e}");
+                exit(1)
+            }
+        },
+        Err(e) => {
+            tracing::error!("Could not di for orders module; {e}");
+            exit(1)
+        }
+    };
+
+    let notifiyer = match di_ctx.inject(NotificationModule::new) {
+        Ok(r) => r.await,
+        Err(e) => {
+            tracing::error!("Failed to initialize permissions module: {}", e);
+            exit(1)
+        }
+    };
+
     let cart = CartModule::new();
 
     let host = env::var("HOST").unwrap_or_else(|_| "127.0.0.1".to_string());
