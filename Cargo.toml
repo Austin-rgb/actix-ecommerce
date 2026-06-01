@@ -17,6 +17,9 @@ futures = "0.3.32"
 notification = {git="https://github.com/Ferrumec/notification"}
 tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 tracing = "0.1.44"
+sqlx = { version = "0.8.6", features = ["sqlite"] }
+actixutils = { path = "../actixutils" }
+event-stream = { path = "../event-stream" }
 # --- Local overrides ---
 
 [patch."https://github.com/Ferrumec/auth"]
@@ -42,3 +45,4 @@ ferrumec = { path = "../ferrumec" }
 
 [patch."https://github.com/Ferrumec/notification"]
 notification = { path = "../notification" }
+

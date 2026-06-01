@@ -7,12 +7,14 @@ use ferrumec::Dependencies;
 use inventory::InventoryModule;
 use notification::Module as NotificationModule;
 use orders::Module as OrdersModule;
+use sqlx::{Pool, Sqlite, SqlitePool};
+use std::sync::Arc;
 use std::{env, process::exit};
 use tenant::AuthorizModule;
-
 use tracing_subscriber::{EnvFilter, fmt, prelude::*};
-
 mod logging;
+use actixutils::{Authority, HS256Signer, Identity, Sign, Validate};
+use event_stream::{EventStream, NatsEventStream};
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -21,8 +23,33 @@ async fn main() -> std::io::Result<()> {
         .with(fmt::layer())
         .with(EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into()))
         .init();
+    let url = env::var("DATABASE_URL").expect("DATABASE_URL not set");
+    let pool: Pool<Sqlite> = SqlitePool::connect(&url)
+        .await
+        .expect("Could not connect to db");
+    let mut di_ctx = Dependencies::new();
+    di_ctx.insert(pool);
 
-    let di_ctx = Dependencies::new();
+    let jwt = Arc::new(HS256Signer::new(
+        env::var("validate.aud").expect("validate.aud not set"),
+        env::var("validate.secret").expect("validate.secret not set"),
+    ));
+
+    di_ctx.insert(jwt.clone() as Arc<dyn Validate<Identity>>);
+    di_ctx.insert(jwt.clone() as Arc<dyn Validate<Authority>>);
+    di_ctx.insert(jwt.clone() as Arc<dyn Sign<Identity>>);
+di_ctx.insert(jwt as Arc<dyn Sign<Authority>>);
+
+    let nats = match NatsEventStream::new(&env::var("es.url").expect("es.url not set")).await {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Could not connect to event stream: {e}");
+            exit(1)
+        }
+    };
+    let es = Arc::new(nats) as Arc<dyn EventStream>;
+    di_ctx.insert(es);
+
     let module = match di_ctx.inject(AuthModule::new) {
         Ok(r) => r.await,
         Err(e) => {
@@ -83,7 +110,7 @@ async fn main() -> std::io::Result<()> {
     let notifiyer = match di_ctx.inject(NotificationModule::new) {
         Ok(r) => r.await,
         Err(e) => {
-            tracing::error!("Failed to initialize permissions module: {}", e);
+            tracing::error!("Failed to initialize notifications module: {}", e);
             exit(1)
         }
     };
