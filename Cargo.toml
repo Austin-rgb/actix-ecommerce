@@ -20,6 +20,7 @@ tracing = "0.1.44"
 sqlx = { version = "0.8.6", features = ["sqlite"] }
 actixutils = { path = "../actixutils" }
 event-stream = { path = "../event-stream" }
+emailgrid = {path="../emailgrid"}
 # --- Local overrides ---
 
 [patch."https://github.com/Ferrumec/auth"]

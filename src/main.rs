@@ -14,6 +14,7 @@ use tenant::AuthorizModule;
 use tracing_subscriber::{EnvFilter, fmt, prelude::*};
 mod logging;
 use actixutils::{Authority, HS256Signer, Identity, Sign, Validate};
+use emailgrid::{EmailAddress, EmailingContext, Resend, Sender};
 use event_stream::{EventStream, NatsEventStream};
 
 #[actix_web::main]
@@ -38,8 +39,13 @@ async fn main() -> std::io::Result<()> {
     di_ctx.insert(jwt.clone() as Arc<dyn Validate<Identity>>);
     di_ctx.insert(jwt.clone() as Arc<dyn Validate<Authority>>);
     di_ctx.insert(jwt.clone() as Arc<dyn Sign<Identity>>);
-di_ctx.insert(jwt as Arc<dyn Sign<Authority>>);
-
+    di_ctx.insert(jwt as Arc<dyn Sign<Authority>>);
+    let name = env::var("email.name").expect("email.name not set");
+    let email = env::var("email.address").expect("email.address not set");
+    let email = EmailAddress { name, email };
+    let sender = Arc::new(Resend::new().expect("could not load resend")) as Arc<dyn Sender>;
+    let ec = EmailingContext::new(sender, email).unwrap();
+    di_ctx.insert(ec);
     let nats = match NatsEventStream::new(&env::var("es.url").expect("es.url not set")).await {
         Ok(r) => r,
         Err(e) => {
