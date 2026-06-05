@@ -13,7 +13,7 @@ use orders::Module as OrdersModule;
 use sqlx::{Pool, Sqlite, SqlitePool};
 use std::{env, process::exit, sync::Arc};
 use tenant::AuthorizModule;
-use tracing_subscriber::{fmt, prelude::*, EnvFilter};
+use tracing_subscriber::{EnvFilter, fmt, prelude::*};
 
 mod logging;
 
@@ -23,8 +23,7 @@ fn fatal(msg: impl std::fmt::Display) -> ! {
 }
 
 async fn build_pool() -> Pool<Sqlite> {
-    let url = env::var("DATABASE_URL")
-        .expect("DATABASE_URL not set");
+    let url = env::var("DATABASE_URL").expect("DATABASE_URL not set");
 
     SqlitePool::connect(&url)
         .await
@@ -44,8 +43,7 @@ fn register_auth(deps: &mut Dependencies) {
 }
 
 fn register_email(deps: &mut Dependencies) {
-    let sender =
-        Arc::new(Resend::new().expect("could not load resend")) as Arc<dyn Sender>;
+    let sender = Arc::new(Resend::new().expect("could not load resend")) as Arc<dyn Sender>;
 
     let from = EmailAddress {
         name: env::var("email.name").expect("email.name not set"),
@@ -59,8 +57,7 @@ fn register_email(deps: &mut Dependencies) {
 }
 
 async fn register_event_stream(deps: &mut Dependencies) {
-    let url = env::var("es.url")
-        .expect("es.url not set");
+    let url = env::var("es.url").expect("es.url not set");
 
     let stream = NatsEventStream::new(&url)
         .await
@@ -75,10 +72,7 @@ async fn main() -> std::io::Result<()> {
 
     tracing_subscriber::registry()
         .with(fmt::layer())
-        .with(
-            EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "info".into()),
-        )
+        .with(EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into()))
         .init();
 
     let pool = build_pool().await;
@@ -124,11 +118,9 @@ async fn main() -> std::io::Result<()> {
 
     let cart = CartModule::new();
 
-    let host = env::var("HOST")
-        .unwrap_or_else(|_| "127.0.0.1".to_string());
+    let host = env::var("HOST").unwrap_or_else(|_| "127.0.0.1".to_string());
 
-    let port = env::var("PORT")
-        .unwrap_or_else(|_| "8080".to_string());
+    let port = env::var("PORT").unwrap_or_else(|_| "8080".to_string());
 
     let bind_address = format!("{host}:{port}");
 
