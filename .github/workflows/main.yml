@@ -24,11 +24,11 @@ jobs:
 
       - name: Build image
         run: |
-          docker build \
-            -t ghcr.io/${{ github.repository_owner }}/sqlx-cli:latest \
+          docker build -f Dockerfile.sqlx \
+            -t ghcr.io/austin-rgb/sqlx-cli:latest \
             .
 
       - name: Push image
         run: |
           docker push \
-            ghcr.io/${{ github.repository_owner }}/sqlx-cli:latest
+            ghcr.io/austin-rgb/sqlx-cli:latest
