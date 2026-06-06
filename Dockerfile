@@ -1,18 +1,19 @@
 # Stage 1: Build
-FROM rust:1.94-bookworm as builder
+FROM ghcr.io/austin-rgb/sqlx-cli:latest as builder
+
 WORKDIR /app
 COPY . .
 
-# 1. Define the argument at the top of your build stage
+# GitHub token for private dependencies
 ARG GITHUB_TOKEN
 
-# 2. Use the argument to configure git
-RUN git config --global url."https://${GITHUB_TOKEN}:x-oauth-basic@github.com/".insteadOf "https://github.com/"
+RUN git config --global \
+    url."https://${GITHUB_TOKEN}:x-oauth-basic@github.com/".insteadOf \
+    "https://github.com/"
 
-# Run migrations 
+# Run migrations
 ARG DATABASE_URL
 
-RUN cargo install sqlx-cli -F sqlite
 RUN cargo sqlx migrate run
 RUN cargo build --release
 
