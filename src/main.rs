@@ -30,18 +30,6 @@ async fn build_pool() -> Pool<Sqlite> {
         .unwrap_or_else(|e| fatal(format!("Could not connect to database: {e}")))
 }
 
-fn register_auth(deps: &mut Dependencies) {
-    let jwt = Arc::new(HS256Signer::new(
-        env::var("validate.aud").expect("validate.aud not set"),
-        env::var("validate.secret").expect("validate.secret not set"),
-    ));
-
-    deps.insert(jwt.clone() as Arc<dyn Validate<Identity>>);
-    deps.insert(jwt.clone() as Arc<dyn Validate<Authority>>);
-    deps.insert(jwt.clone() as Arc<dyn Sign<Identity>>);
-    deps.insert(jwt as Arc<dyn Sign<Authority>>);
-}
-
 fn register_email(deps: &mut Dependencies) {
     let sender = Arc::new(Resend::new().expect("could not load resend")) as Arc<dyn Sender>;
 
@@ -80,7 +68,15 @@ async fn main() -> std::io::Result<()> {
     let mut deps = Dependencies::new();
     deps.insert(pool);
 
-    register_auth(&mut deps);
+    let jwt = Arc::new(HS256Signer::new(
+        env::var("validate.aud").expect("validate.aud not set"),
+        env::var("validate.secret").expect("validate.secret not set"),
+    ));
+    let val_id = jwt.clone() as Arc<dyn Validate<Identity>>;
+    deps.insert(val_id.clone());
+    deps.insert(jwt.clone() as Arc<dyn Validate<Authority>>);
+    deps.insert(jwt.clone() as Arc<dyn Sign<Identity>>);
+    deps.insert(jwt as Arc<dyn Sign<Authority>>);
     register_email(&mut deps);
     register_event_stream(&mut deps).await;
 
@@ -128,6 +124,7 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         App::new()
+            .app_data(val_id.clone())
             .wrap(logging::LoggingMiddleware)
             .configure(|cfg| auth.config(cfg, "auth"))
             .configure(|cfg| permissions.config(cfg, "permissions"))
