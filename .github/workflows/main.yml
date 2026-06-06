@@ -1,3 +1,34 @@
-FROM rust:1.94-bookworm
+name: Build and Push sqlx-cli
 
-RUN cargo install sqlx-cli --locked --no-default-features --features sqlite
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build image
+        run: |
+          docker build \
+            -t ghcr.io/${{ github.repository_owner }}/sqlx-cli:latest \
+            .
+
+      - name: Push image
+        run: |
+          docker push \
+            ghcr.io/${{ github.repository_owner }}/sqlx-cli:latest
