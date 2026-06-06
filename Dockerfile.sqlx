@@ -1,0 +1,3 @@
+FROM rust:1.94-bookworm
+
+RUN cargo install sqlx-cli --locked --no-default-features --features sqlite
