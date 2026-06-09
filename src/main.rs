@@ -73,10 +73,11 @@ async fn main() -> std::io::Result<()> {
         env::var("validate.secret").expect("validate.secret not set"),
     ));
     let val_id = jwt.clone() as Arc<dyn Validate<Identity>>;
+    let val_auth = jwt.clone() as Arc<dyn Validate<Authority>>;
     deps.insert(val_id.clone());
-    deps.insert(jwt.clone() as Arc<dyn Validate<Authority>>);
+    deps.insert(val_auth.clone());
     deps.insert(jwt.clone() as Arc<dyn Sign<Identity>>);
-    deps.insert(jwt as Arc<dyn Sign<Authority>>);
+    deps.insert(jwt.clone() as Arc<dyn Sign<Authority>>);
     register_email(&mut deps);
     register_event_stream(&mut deps).await;
 
@@ -125,6 +126,7 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .app_data(val_id.clone())
+            .app_data(val_auth.clone())
             .wrap(logging::LoggingMiddleware)
             .configure(|cfg| auth.config(cfg, "auth"))
             .configure(|cfg| permissions.config(cfg, "permissions"))
